@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public List<int> actions; //行动指令
 
+    [Header("输入内容")]
     public int inputMode = 0;
     //输入模式，10影响力，10/11航道影响力，20资源点，30移动城市, 40城市样式, 41购买方式
     //51人物技能，52事件技能，53设施技能,61人物，62设备,70多功能按键
@@ -27,28 +28,20 @@ public class GameManager : MonoBehaviourPunCallbacks
     public List<int> freeButtons;
     public List<Facility> facilities;
 
+    [Header("工作列表")]
     public List<int> getMoney;//采集资源时获得的钱在一轮结算完后再给钱,探索时当场结算0银行1234
-
     public List<MoveCity> canAddMoveCities;//移动城市时可被选择的移动城市
     public List<Influence> canAddInfluences;//可以被选择的航道影响力
     public List<Influence_Channel> canAddInfluence_Channels;//可以选择的航道影响力
     public List<Resource> canAddResources;//可以被选择的资源点
     public List<Block> GetBlocks;//采集的地块
-    //map需要写一个通过block找航道的函数
-    //还有一个通过航道找block的函数
-
-    //技能执行逻辑：button调用skill（其实是string）添加到gamemanager的输入栏，然后获取到后到相应技能库内调取方法
-
-
-    public int whoseTurn = 0; // 1，2（，3）（，4）
-    public int whoseSmallTurn = 0; // 1,2,3,4 //谁的快速行动
-
-    public bool isBusy; //是否有正在进行的动作（用于给快速行动的）
-    public bool isStart; //是否正在进行游戏
-
-    public int FarExplore; //解封的回合
 
     [Header("屎山参数")]
+    public int whoseTurn = 0; // 1，2（，3）（，4）
+    public int whoseSmallTurn = 0; // 1,2,3,4 //谁的快速行动
+    public bool isBusy; //是否有正在进行的动作（用于给快速行动的）
+    public bool isStart; //是否正在进行游戏
+    public int FarExplore; //解封的回合
     public int whoseColor; //目前用于移除别人影响力,以及快速行动时的临时变量
     public bool isQuickAction;//是否为快速行动，快速行动不需要进位，默认不是
     public bool ifYes; //用于确认
@@ -58,6 +51,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public bool canSkip; //能不能skip
     public int workCount; //判断有没有新输入
     public Event workEvent;
+    public int extraTurn = 0;
 
     [Header("游戏内轮换参数")]
     //主计数器 0初始 1-8回合 9结算分数0->10, 10时游戏结算
@@ -227,7 +221,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                             players[whoseTurn - 1].city_block.block.i2.upgradeColor(whoseTurn);
                         }
                     }
-                    players[whoseTurn - 1].city_block.upgradeColor(5);
+                    players[whoseTurn - 1].city_block.upgradeColor(0);
                     players[whoseTurn - 1].city_block.whoseCity = 0;
 
                 }
@@ -239,12 +233,12 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if (moveCities[0].block.i1.whosecolor == whoseTurn) { }
                 else
                 {
-                    moveCities[0].block.i1.upgradeColor(5);
+                    moveCities[0].block.i1.upgradeColor(0);
                 }
                 if (moveCities[0].block.i2.whosecolor == whoseTurn) { }
                 else
                 {
-                    moveCities[0].block.i2.upgradeColor(5);
+                    moveCities[0].block.i2.upgradeColor(0);
                 }
 
                 instance.players[whoseTurn - 1].city_block = moveCities[0];
@@ -788,10 +782,39 @@ public class GameManager : MonoBehaviourPunCallbacks
         }//发动事件技能
         else if (actions[0] == 11)
         {
-            inputMode = 62;
-            inputMode = 0;
-            next_action();
-        } //输入购买方法(直接放进facilities)，并移除该设备并翻牌（facilityManager)，后接13xxx
+            inputMode = 41;
+            if (facilities.Count == 0)
+            {
+                return;
+            }
+            else
+            {
+                if(ifBack == true)
+                {
+                    ifBack = false;
+                    facilities.RemoveAt(0);
+                    UIManager.showUISingle("请选择要购买的设备");
+                    return;
+                }
+                if(ifYes == false)
+                {
+                    UIManager.showUISingle(facilities[0].id + "被选择");
+                    return;
+                }
+                addActions(13);
+                if(players[whoseColor - 1].returnIfShowSelfFacility() == true)
+                {
+                    return;
+                }
+                else
+                {
+                    players[whoseColor - 1].changeIfShowSelfFacility();
+                }
+                UIManager.showUISingle("请选择放置的位置");
+                inputMode = 0;
+                next_action();
+            }
+        } //输入购买方法(直接放进facilities)，并移除该设备并翻牌（MapManager)，后接13
         else if (actions[0] == 12)
         {
             inputMode = 41;
@@ -800,10 +823,43 @@ public class GameManager : MonoBehaviourPunCallbacks
         } //发动城市样式技能xxx
         else if (actions[0] == 13)
         {
-            inputMode = 63;
-            inputMode = 0;
-            next_action();
-        } //选择设备(放的地方)行动，放下后执行16xxx
+            inputMode = 62;
+            if(facilities.Count == 1)
+            {
+                return;
+            }
+            else
+            {
+                if(ifBack == true)
+                {
+                    ifBack = false;
+                    facilities.RemoveAt(1);
+                    UIManager.showUISingle("请选择放置的位置");
+                    return;
+                }
+                if(ifYes == false)
+                {
+                    UIManager.showUISingle(facilities[1].id + "被选择");
+                    return;
+                }
+                facilities[1].becomeOtherFacility(facilities[0]);
+                if(facilities[1].skill1 == "" && facilities[1].skill2 == "")
+                {
+                    UIManager.showUI("");
+                }
+                else if (facilities[1].skill1 != "" && facilities[1].skill2 ==""){
+                    SkillLibrary.UseFacilitySkill(facilities[1].skill1);
+                    UIManager.showUI("");
+                }
+                else
+                {
+                    addActions(16);
+                    UIManager.showUISingle("请选择设备技能");
+                }
+                inputMode = 0;
+                next_action();
+            }
+        } //选择设备(放的地方)行动，放下后执行16
         else if (actions[0] == 14)
         {
             inputMode = 63;
@@ -813,9 +869,30 @@ public class GameManager : MonoBehaviourPunCallbacks
         else if (actions[0] == 16)
         {
             inputMode = 53;
-            inputMode = 0;
-            next_action();
-        } //发动设施技能xxx
+            if(skills.Count == 0)
+            {
+                return;
+            }
+            else
+            {
+                if(ifBack == true)
+                {
+                    ifBack = false;
+                    skills.RemoveAt(0);
+                    UIManager.showUISingle("请输入发动的设备技能");
+                    return;
+                }
+                if(ifYes == false)
+                {
+                    UIManager.showUISingle(skills[0] + "被选择");
+                    return;
+                }
+                UIManager.showUI("");
+                SkillLibrary.UseFacilitySkill(skills[0]);
+                inputMode = 0;
+                next_action();
+            }
+        } //发动设施技能
         else
         {
             canSkip = true;
@@ -837,6 +914,12 @@ public class GameManager : MonoBehaviourPunCallbacks
                 photonView.RPC("UpdateQuickTurn", RpcTarget.All);
                 return;
             }
+            if(extraTurn != 0)
+            {
+                extraTurn--;
+                photonView.RPC("UpdateQuickTurn", RpcTarget.All);
+                return;
+            }
             photonView.RPC("UpdateTurn", RpcTarget.All);
         } //如果运行完一个行动后没有下一个行动
     }
@@ -854,6 +937,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         whofirst = Random.Range(0, players.Count);
         UIManager.deleteStart();
         UIManager.deleteReady();
+        //在这里添加给予先手资源的代码
         photonView.RPC("UpdateStart", RpcTarget.All, whofirst);
         
     }
@@ -930,9 +1014,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         return instance.canSkip;
     } //返回可不可以跳过
 
+    public static Player returnPlayer(int index)
+    {
+        return instance.players[index];
+    }
+
     public static void addActions(int action)
     {
         changeBusy(true);
+        changeIfYes(false);
+        changeIfBack(false);
         instance.actions.Add(action);
     } //添加行动列表
 
@@ -965,6 +1056,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         instance.cityStyles.Add(cityStyle);
     }//获得城市样式输入
+
+    public static void addFacility(Facility facility)
+    {
+        instance.facilities.Add(facility);
+    }
 
     public static void addSkill(string skill)
     {
@@ -1079,7 +1175,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         instance.canAddInfluence_Channels.Clear();
         instance.canAddResources.Clear();
         instance.GetBlocks.Clear();
-    }
+    }//清空输入列表
 
     public static void giveReasource(int Money, int Stone, int Yuanshi, int Iron, int BigYuanshi, int Winpoint)
     {
@@ -1089,6 +1185,27 @@ public class GameManager : MonoBehaviourPunCallbacks
     public static void punGiveResource(int num, int Money, int Stone, int Yuanshi, int Iron, int BigYuanshi, int Winpoint)
     {
         instance.photonView.RPC("UpdateResource", RpcTarget.Others, num, Money, Stone, Yuanshi, Iron, BigYuanshi, Winpoint);
+    }
+
+    public static bool canBuyFacility(int Money, int Stone, int Yuanshi, int Iron, int BigYuanshi, int Winpoint)
+    {
+        if(Money > instance.players[instance.whoseColor - 1].money
+        && Stone > instance.players[instance.whoseColor - 1].stone
+        && Yuanshi > instance.players[instance.whoseColor - 1].yuanshi
+        && Iron > instance.players[instance.whoseColor - 1].iron
+        && BigYuanshi > instance.players[instance.whoseColor - 1].bigYuanshi
+        && Winpoint > instance.players[instance.whoseColor - 1].winPoint
+        )
+        {
+            return false;
+        }
+
+        return true;
+    } //判断能不能买得起设备
+
+    public static Player returnAPlayer(int num)
+    {
+        return instance.players[num - 1];
     }
 
     public static Player returnWhichPlayerNow()
@@ -1109,7 +1226,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 return;
             }
         }
-        PhotonNetwork.Instantiate("Player1", new Vector3(0, 0, 0), Quaternion.identity, 0);
+        PhotonNetwork.Instantiate("Player 1", new Vector3(0, 0, 0), Quaternion.identity, 0);
     }
     public static void ready2()
     {
@@ -1124,7 +1241,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 return;
             }
         }
-        PhotonNetwork.Instantiate("Player2", new Vector3(0, 0, 0), Quaternion.identity, 0);
+        PhotonNetwork.Instantiate("Player 2", new Vector3(0, 0, 0), Quaternion.identity, 0);
     }
     public static void ready3()
     {
@@ -1139,7 +1256,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 return;
             }
         }
-        PhotonNetwork.Instantiate("Player3", new Vector3(0, 0, 0), Quaternion.identity, 0);
+        PhotonNetwork.Instantiate("Player 3", new Vector3(0, 0, 0), Quaternion.identity, 0);
     }
     public static void ready4()
     {
@@ -1154,7 +1271,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 return;
             }
         }
-        PhotonNetwork.Instantiate("Player4", new Vector3(0, 0, 0), Quaternion.identity, 0);
+        PhotonNetwork.Instantiate("Player 4", new Vector3(0, 0, 0), Quaternion.identity, 0);
     }
 
 
@@ -1175,7 +1292,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             getMoney.Add(0);
         }
-        //给初始资源也在这边给
         if (sceNum == 2)
         {
             FarExplore = 7;
@@ -1285,9 +1401,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         players[num - 1].bigYuanshi += BigYuanshi;
         players[num - 1].winPoint += Winpoint;
     }
+
     [PunRPC]
     void End()
     {
+        foreach(Player player in players)
+        {
+            player.player_UIManager.upgradeResource(player.stone, player.yuanshi, player.iron, player.bigYuanshi, player.money, player.winPoint);
+        }
         isStart = false;
     }
 }

@@ -17,12 +17,14 @@ public class Map_Manager : MonoBehaviourPunCallbacks
     public List<Influence> influences;
     public List<Influence_Channel> influence_Channels;
 
-
     public bool ifShowFacility;
     public bool ifShowCityStyle;
 
     public List<Facility> facilities;
     public List<Facility> show_facilities;
+    public List<Facility> special_facilities;
+    public Facility workFacility;
+
     public List<CityStyle> cityStyles;
 
     public List<Event> green_events;
@@ -37,7 +39,8 @@ public class Map_Manager : MonoBehaviourPunCallbacks
     public List<Block> farBlocks;
     public List<Channel_1> farChannels_1;
     public List<Channel_2> farChannels_2;
-
+    //计算分数
+    [Header("计算器")]
     public List<int> recode;
     public List<int> cal;
     public List<int> maxindex;
@@ -150,18 +153,14 @@ public class Map_Manager : MonoBehaviourPunCallbacks
 
     }
 
-    public static void registerFacility(Facility facility) // 初始化两个个影响力的航道
+    public static void registerFacility(Facility facility) // 初始化设备
     {
         if (instance == null)
         {
             return;
         }
 
-        if (!instance.facilities.Contains(facility))
-        {
-            instance.facilities.Add(facility);
-        }
-
+        instance.facilities.Add(facility);
     }
 
     public static void registerEvent(Event events) // 初始化事件
@@ -173,6 +172,7 @@ public class Map_Manager : MonoBehaviourPunCallbacks
         if(events.whichDiff == 1)
         {
             instance.green_events.Add(events);
+
         }
         else if (events.whichDiff == 2)
         {
@@ -184,6 +184,16 @@ public class Map_Manager : MonoBehaviourPunCallbacks
         }
 
 
+    }
+
+    public static void registerCityStyle(CityStyle cityStyle)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        instance.cityStyles.Add(cityStyle);
     }
 
     public static void startBlock() //开始选择初始点
@@ -267,19 +277,19 @@ public class Map_Manager : MonoBehaviourPunCallbacks
         {
             i = Random.Range(0, instance.green_events.Count - 1);
             instance.workEvent = instance.green_events[i];
-            instance.green_events.Remove(instance.workEvent);
+            instance.photonView.RPC("deleteWorkEvent", RpcTarget.All, instance.workEvent.id, instance.workEvent.whichDiff);
         }
         else if(x == 2)
         {
             i = Random.Range(0, instance.orange_events.Count - 1);
             instance.workEvent = instance.orange_events[i];
-            instance.orange_events.Remove(instance.workEvent);
+            instance.photonView.RPC("deleteWorkEvent", RpcTarget.All, instance.workEvent.id, instance.workEvent.whichDiff);
         }
         else if(x == 3)
         {
             i = Random.Range(0, instance.red_events.Count - 1);
             instance.workEvent = instance.red_events[i];
-            instance.red_events.Remove(instance.workEvent);
+            instance.photonView.RPC("deleteWorkEvent", RpcTarget.All, instance.workEvent.id, instance.workEvent.whichDiff);
         }
         else
         {
@@ -287,9 +297,106 @@ public class Map_Manager : MonoBehaviourPunCallbacks
             UIManager.showUI("出错了，估计是跑不下去了");
             instance.workEvent = null;
         }
+        Player player = GameManager.returnPlayer(GameManager.returnWhoseColor() - 1);
         instance.workEvent.self.SetActive(true);
         return instance.workEvent;
     } //x为颜色
+
+    [PunRPC]
+    void deleteWorkEvent(string id, int diff)
+    {
+        if(diff == 1)
+        {
+            for(int i = 0; i < green_events.Count; i++)
+            {
+                if(green_events[i].id == id)
+                {
+                    green_events.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+        else if (diff == 2)
+        {
+            for (int i = 0; i < orange_events.Count; i++)
+            {
+                if (orange_events[i].id == id)
+                {
+                    orange_events.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+        else if (diff == 3)
+        {
+            for (int i = 0; i < red_events.Count; i++)
+            {
+                if (red_events[i].id == id)
+                {
+                    red_events.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+        return;
+    }
+
+    public static void startFacility()
+    {
+        foreach(Facility facility in instance.show_facilities)
+        {
+            giveFacility(facility);
+        }
+    }
+
+    public static void giveFacility(Facility facility)
+    {
+        int i;
+        i = Random.Range(0, instance.facilities.Count - 1);
+        instance.workFacility = instance.facilities[i];
+        Debug.Log("随机到"+instance.facilities[i].id);
+        Debug.Log("选择格子" + facility.id);
+        instance.photonView.RPC("updateShowFacility", RpcTarget.All, facility.id, instance.workFacility.id);
+        instance.photonView.RPC("deleteWorkFacility", RpcTarget.All, instance.workFacility.id);
+    }//从设备堆抽取一个设备
+
+    [PunRPC]
+    void deleteWorkFacility(string id)
+    {
+        for(int i = 0; i < facilities.Count; i++)
+        {
+            if(facilities[i].id == id)
+            {
+                facilities.RemoveAt(i);
+                //workFacility = null;
+                return;
+            }
+        }
+        return;
+    }
+
+    [PunRPC]
+    void updateShowFacility(string showFacilityId , string becomeFacilityID)
+    {
+        for(int i = 0; i < show_facilities.Count; i++)
+        {
+            if(showFacilityId == show_facilities[i].id)
+            {
+                Debug.Log("匹配格子到" + show_facilities[i].id);
+                for(int j = 0; j < facilities.Count; j++)
+                {
+                    if(facilities[j].id == becomeFacilityID)
+                    {
+                        Debug.Log("匹配列表" + facilities[j].id);
+                        workFacility = facilities[j];
+                        show_facilities[i].becomeOtherFacility(facilities[j]);
+                        return;
+                    }
+                }
+            }
+        }
+        return;
+    }//从设备堆到展示堆
 
     public static List<Influence_Channel> blockToInfluenceChannels(Block block)
     {
@@ -369,22 +476,27 @@ public class Map_Manager : MonoBehaviourPunCallbacks
             }
             if(block.mc.whoseCity != 0)
             {
-                instance.cal[block.mc.whoseCity - 1]++;
+                instance.cal[block.mc.whoseCity - 1]+=2;
             }
             maxsc = instance.cal.Max();
-            for (int i = 0; i < instance.cal.Count; i++)
+            if (maxsc == 0) { }
+            else
             {
-                if (instance.cal[i] == maxsc)
+                for (int i = 0; i < instance.cal.Count; i++)
                 {
-                    instance.maxindex.Add(i);
+                    if (instance.cal[i] == maxsc)
+                    {
+                        instance.maxindex.Add(i);
+                    }
+                    instance.cal[i] = 0;
                 }
-                instance.cal[i] = 0;
+                foreach (int x in instance.maxindex)
+                {
+                    instance.recode[x] += block.winPoint;
+                }
+                instance.maxindex.Clear();
             }
-            foreach(int x in instance.maxindex)
-            {
-                instance.recode[x] += block.winPoint;
-            }
-            instance.maxindex.Clear();
+            
         }
         foreach(Channel_1 channel_1 in instance.channels_1)
         {
@@ -393,19 +505,23 @@ public class Map_Manager : MonoBehaviourPunCallbacks
                 instance.cal[channel_1.i1.whosecolor - 1]++;
             }
             maxsc = instance.cal.Max();
-            for (int i = 0; i < instance.cal.Count; i++)
+            if (maxsc == 0) { }
+            else
             {
-                if (instance.cal[i] == maxsc)
+                for (int i = 0; i < instance.cal.Count; i++)
                 {
-                    instance.maxindex.Add(i);
+                    if (instance.cal[i] == maxsc)
+                    {
+                        instance.maxindex.Add(i);
+                    }
+                    instance.cal[i] = 0;
                 }
-                instance.cal[i] = 0;
+                foreach (int x in instance.maxindex)
+                {
+                    instance.recode[x] += channel_1.winPoint;
+                }
+                instance.maxindex.Clear();
             }
-            foreach (int x in instance.maxindex)
-            {
-                instance.recode[x] += channel_1.winPoint;
-            }
-            instance.maxindex.Clear();
         }
         foreach (Channel_2 channel_2 in instance.channels_2)
         {
@@ -418,22 +534,74 @@ public class Map_Manager : MonoBehaviourPunCallbacks
                 instance.cal[channel_2.i2.whosecolor - 1]++;
             }
             maxsc = instance.cal.Max();
-            for (int i = 0; i < instance.cal.Count; i++)
+            if(maxsc == 0) { }
+            else
             {
-                if (instance.cal[i] == maxsc)
+                for (int i = 0; i < instance.cal.Count; i++)
                 {
-                    instance.maxindex.Add(i);
+                    if (instance.cal[i] == maxsc)
+                    {
+                        instance.maxindex.Add(i);
+                    }
+                    instance.cal[i] = 0;
                 }
-                instance.cal[i] = 0;
+                foreach (int x in instance.maxindex)
+                {
+                    instance.recode[x] += channel_2.winPoint;
+                }
+                instance.maxindex.Clear();
             }
-            foreach (int x in instance.maxindex)
-            {
-                instance.recode[x] += channel_2.winPoint;
-            }
-            instance.maxindex.Clear();
         }
         return instance.recode;
     }
 
+    public static void changeIfShowFacilityM(int num)
+    {
+        instance.ifShowFacility = !instance.ifShowFacility;
+        if(instance.ifShowFacility == true)
+        {
+            if(GameManager.returnAPlayer(num).returnIfShowSelfFacility() == true)
+            {
+                GameManager.returnAPlayer(num).changeIfShowSelfFacility();
+            }
+            if(instance.ifShowCityStyle == true)
+            {
+                changeIfShowCityStyleM(num);
+            }
+        }
+        foreach(Facility facility in instance.show_facilities)
+        {
+            facility.selfF.SetActive(instance.ifShowFacility);
+        }
+    } // 切换购买设备面板
 
+    public static bool returnIfShowFacilityM()
+    {
+        return instance.ifShowFacility;
+    }
+
+    public static void changeIfShowCityStyleM(int num)
+    {
+        instance.ifShowCityStyle = !instance.ifShowCityStyle;
+        if (instance.ifShowCityStyle == true)
+        {
+            if (GameManager.returnAPlayer(num).returnIfShowSelfFacility() == true)
+            {
+                GameManager.returnAPlayer(num).changeIfShowSelfFacility();
+            }
+            if (instance.ifShowFacility == true)
+            {
+                changeIfShowFacilityM(num);
+            }
+        }
+        foreach (CityStyle cityStyle in instance.cityStyles)
+        {
+            cityStyle.selfF.SetActive(instance.ifShowCityStyle);
+        }
+    } //切换城市样式面板
+
+    public static bool returnIfShowCityStyleM()
+    {
+        return instance.ifShowCityStyle;
+    }
 }

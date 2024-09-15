@@ -28,7 +28,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         {
             return;
         }
-        if(Number.text != "2" && Number.text != "3" && Number.text == "4")
+        if(Number.text != "2" && Number.text != "3" && Number.text != "4")
         {
             return;
         }

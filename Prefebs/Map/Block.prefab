@@ -573,7 +573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 993cc5fa571314683b767a785477ce57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  winPoint: 0
+  winPoint: 1
   Name: X-X
   i1: {fileID: 783434838585158269}
   i2: {fileID: 2452089845917184567}

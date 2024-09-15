@@ -11,6 +11,7 @@ public class SkillLibrary : MonoBehaviour
     private Dictionary<string, System.Action> cityStyleSkills = new Dictionary<string, System.Action>();
 
     //如果选择并确定了使用技能但是不能支付代价，那么该技能会被直接跳过，望周知
+    //先手强制获取时数值应该是需要的数值-1，因为回合交替时需要+1
     void Start()
     {
         instance = this;
@@ -29,10 +30,15 @@ public class SkillLibrary : MonoBehaviour
         } //添加人物技能
         if (true)
         {
+            facilitySkills.Add("F1", F1);
+            facilitySkills.Add("F2", F2);
+        }//添加设备技能
+        if (true)
+        {
             eventSkills.Add("T1", T1);
             eventSkills.Add("T2", T2);
             eventSkills.Add("T3", T3);
-        }//测试
+        }//事件技能
     }
 
     // 通过技能名称调用对应的技能方法
@@ -40,6 +46,19 @@ public class SkillLibrary : MonoBehaviour
     {
         System.Action skill;
         if (instance.characterSkills.TryGetValue(skillName, out skill))
+        {
+            skill.Invoke(); // 调用技能方法
+        }
+        else
+        {
+            Debug.LogError("Unknown skill: " + skillName);
+        }
+    }
+
+    public static void UseFacilitySkill(string skillName)
+    {
+        System.Action skill;
+        if (instance.facilitySkills.TryGetValue(skillName, out skill))
         {
             skill.Invoke(); // 调用技能方法
         }
@@ -103,6 +122,17 @@ public class SkillLibrary : MonoBehaviour
     {
         Debug.Log("KNT2");
     }
+
+    private void F1()
+    {
+        Debug.Log("F1");
+    }
+
+    private void F2()
+    {
+        Debug.Log("F2");
+    }
+
     private void T1()
     {
         

@@ -667,6 +667,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   self: {fileID: 3958355386827084763}
+  id: ERed
   whichDiff: 3
   whichColor: 3
   count: 3

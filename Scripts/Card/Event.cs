@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Event : MonoBehaviour
 {
     public GameObject self;
+    public string id; //编号,首字母缩写
     public int whichDiff; //123
     public int whichColor; //是什么资源
     public int count; //资源数量

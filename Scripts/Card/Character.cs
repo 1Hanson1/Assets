@@ -24,11 +24,11 @@ public class Character : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if(ifshow == false)
+        if (ifshow == false)
         {
             return;
         }
-        if(copy == null)
+        if (copy == null)
         {
             Transform parent = this.transform.parent;
             copy = Instantiate(this,bigLocation, Quaternion.identity, parent);

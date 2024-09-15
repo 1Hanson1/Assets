@@ -971,7 +971,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d5a253e223074b26937545c4d3f64de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  winPoint: 0
+  winPoint: 1
   Name: X
   i1: {fileID: 1565433708118529125}
   i2: {fileID: 6411073652611809660}

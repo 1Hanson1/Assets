@@ -125,6 +125,15 @@ public class Player : MonoBehaviourPun
             return;
         }
         UIManager.showUI(Name + "选择建设行动");
+        GameManager.addActions(11);
+        if(Map_Manager.returnIfShowFacilityM() == true)
+        {
+            return;
+        }
+        else
+        {
+            changeIfShowFacility();
+        }
     }
     public void action5()//探索
     {
@@ -158,7 +167,7 @@ public class Player : MonoBehaviourPun
         {
             canUseCharacter--;
             GameManager.changeIsQuickAction(true);
-            UIManager.showUI(Name + "使用人物技能");
+            UIManager.showUI(Name + "使用" + show_character.name + "技能");
             GameManager.changeWhoseColor(num);
             GameManager.addActions(8);
         }
@@ -239,25 +248,49 @@ public class Player : MonoBehaviourPun
 
     public void changeIfShowCityStyle()
     {
-
+        if (GameManager.returnIfStart() == false)
+        {
+            return;
+        }
+        Map_Manager.changeIfShowCityStyleM(num);
     }
 
     public void changeIfShowFacility()
     {
-
+        if (GameManager.returnIfStart() == false)
+        {
+            return;
+        }
+        Map_Manager.changeIfShowFacilityM(num);
     }
 
     public void changeIfShowSelfFacility() //展示自己的设备栏
     {
-        if(GameManager.returnIfStart() == false)
+        if (GameManager.returnIfStart() == false)
         {
             return;
         }
         ifShowFacility = !ifShowFacility;
+        if(ifShowFacility == true)
+        {
+            if(Map_Manager.returnIfShowFacilityM() == true)
+            {
+                Map_Manager.changeIfShowFacilityM(num);
+            }
+            if(Map_Manager.returnIfShowCityStyleM() == true)
+            {
+                Map_Manager.changeIfShowCityStyleM(num);
+            }
+        }
         foreach(Facility facility in facilities)
         {
             facility.selfF.SetActive(ifShowFacility);
         }
+    }
+
+    public bool returnIfShowSelfFacility()
+    {
+        return ifShowFacility;
     }
 
     public void givePlayerResource(int Money, int Stone, int Yuanshi, int Iron, int BigYuanshi, int Winpoint)//获取资源

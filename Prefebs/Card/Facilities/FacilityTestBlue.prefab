@@ -1215,7 +1215,7 @@ GameObject:
   - component: {fileID: 92994301998943493}
   - component: {fileID: 7948062930075038601}
   m_Layer: 0
-  m_Name: Facility-Empty
+  m_Name: FacilityTestBlue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1251,20 +1251,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selfF: {fileID: 7747661167471569022}
-  id: FEmpty
+  id: FBlue
   NameT: {fileID: 2927812494510033464}
   winpointT: {fileID: 3282368707220692383}
   s1T: {fileID: 3232787799064897888}
   s2T: {fileID: 504546503428275576}
   p1T: {fileID: 6136157224411514064}
   p2T: {fileID: 437750106193746961}
-  winPoint: 0
-  color: 0
+  winPoint: 2
+  color: 3
   index: -1
   ifNeedOnlyOne: 0
   spriteRenderer: {fileID: 1095004751128615042}
-  skill1: 
-  skill2: 
+  skill1: F1
+  skill2: F2
   payment1: 000000000000000000000000000000000000000000000000
   payment2: 000000000000000000000000000000000000000000000000
   top: {fileID: 0}
@@ -1531,7 +1531,7 @@ SpriteRenderer:
   m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.4, g: 0.5, b: 0.7, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

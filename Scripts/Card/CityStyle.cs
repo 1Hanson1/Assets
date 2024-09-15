@@ -4,15 +4,12 @@ using UnityEngine;
 
 public class CityStyle : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public GameObject selfF;
 
-    // Update is called once per frame
-    void Update()
+
+    private void Start()
     {
-        
+        Map_Manager.registerCityStyle(this);
+        selfF.SetActive(false);
     }
 }
